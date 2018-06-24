@@ -1,0 +1,93 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: templates/setup.php:19
+msgid "<code>%s</code> is recommended."
+msgstr ""
+
+#: includes/Mastodon.php:531 includes/Mastodon.php:535
+msgid "Connect %s"
+msgstr ""
+
+#: templates/setting.php:12
+msgid "Connect with %s"
+msgstr ""
+
+#: includes/Mastodon.php:362
+msgid "Connecting with %1$s, you can login with %2$s via %1$s without password or email address."
+msgstr ""
+
+#: includes/Mastodon.php:560 includes/Mastodon.php:564
+msgid "Disconnect %s"
+msgstr ""
+
+#: templates/setting.php:16
+msgid "How to set up"
+msgstr ""
+
+#: includes/Mastodon.php:491
+msgid "Log in with %s"
+msgstr ""
+
+#: includes/Mastodon.php:498
+msgid "Login with %s"
+msgstr ""
+
+#: templates/setting.php:35
+msgid "Please describe the domain of instance you want to display as login button, one per line. Please specify the login button to any instance as <code>*</code> (asterisk only)."
+msgstr ""
+
+#: templates/setting.php:48
+msgid "Please specify the domain of instances that deny login using regular expressions."
+msgstr ""
+
+#: templates/setting.php:16
+msgid "See detail at <a href=\"%1$s\">%2$s</a>."
+msgstr ""
+
+#: includes/Mastodon.php:234
+msgid "Sorry, but wrong access. Please go back to <a href=\"%s\">%s</a>."
+msgstr ""
+
+#. ('gimastodon')
+#: gianism-mastodon.php:35
+msgid "This plugin requires Gianism 3.0"
+msgstr ""
+
+#: includes/Mastodon.php:205
+msgid "You must be logged in"
+msgstr ""
+
+#: includes/Mastodon.php:264
+msgid "You must be logged in."
+msgstr ""
+
+#: includes/Mastodon.php:561
+msgid "You really disconnect from %s? If so, please be sure about your credential(email, passowrd), or else you might not be able to login again."
+msgstr ""
+
+#: includes/Mastodon.php:359
+msgid "Your account is already connected to the %s account below. Please select an account to disconnect."
+msgstr ""
+
+#: includes/Mastodon.php:268
+msgid "Your account is not connected with %s"
+msgstr ""
+
+#: includes/Mastodon.php:272
+msgid "Your account is now unlinked from %s."
+msgstr ""

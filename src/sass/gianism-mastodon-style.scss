@@ -1,0 +1,29 @@
+.wpg-mastodon-fa-lsf {
+    font-size: 1.5em;
+    vertical-align: -25%;
+}
+
+.fa-mastodon.wpg-mastodon-fa-color {
+    color: #3088d4;
+}
+
+#wpg-login {
+    &.large {
+        .wpg-button {
+            .svg-inline--fa {
+                position: absolute;
+                font-size: 36px;
+                left: 8px;
+                top: 50%;
+                margin-top: -16px;
+            }
+        }
+    }
+    &:not(.large) {
+        .wpg-button {
+            .svg-inline--fa {
+                margin-left: -3px;
+            }
+        }
+    }
+}

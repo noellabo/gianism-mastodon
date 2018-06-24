@@ -1,0 +1,40 @@
+{
+  "name": "noellabo/gianism-mastodon",
+  "description": "A plugin which make you WordPress more social.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0",
+  "authors": [
+    {
+      "name": "noellabo",
+      "email": "noel.yoshiba@gmail.com"
+    }
+  ],
+  "scripts": {
+    "cs": [
+      "vendor/bin/phpcs --standard=phpcs.ruleset.xml $(find ./includes -name '*.php')",
+      "vendor/bin/phpcs --standard=phpcs.ruleset.xml functions.php",
+      "vendor/bin/phpcs --standard=phpcs.ruleset.xml gianism-mastodon.php"
+    ],
+    "cbf": [
+      "vendor/bin/phpcbf --standard=phpcs.ruleset.xml $(find ./includes -name '*.php')",
+      "vendor/bin/phpcbf --standard=phpcs.ruleset.xml functions.php",
+      "vendor/bin/phpcbf --standard=phpcs.ruleset.xml gianism-mastodon.php"
+    ],
+    "test": "phpunit"
+  },
+  "minimum-stability": "dev",
+  "require": {
+    "league/oauth2-client": "~2.3",
+    "noellabo/oauth2-mastodon": "dev-master"
+  },
+  "require-dev": {
+    "squizlabs/php_codesniffer": "*",
+    "wp-coding-standards/wpcs": "dev-master",
+    "wimg/php-compatibility": "dev-master"
+  },
+  "autoload": {
+    "psr-4": {
+      "GianismMastodon\\": "includes"
+    }
+  }
+}
