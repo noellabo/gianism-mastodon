@@ -6,12 +6,11 @@ use Gianism\Pattern\Singleton;
 use Noellabo\OAuth2\Client\Provider\Mastodon as MastodonAuth;
 
 class InstanceRegistry extends Singleton {
-	const INSTANCES_TABLE_NAME = 'wpgmastodon_instances';
 
 	public function get_provider( $url, $client_name, $redirect_uri, $website ) {
 		$domain = $this->get_valid_domain( $url );
 		if ( false === $domain ) {
-			return false;
+			throw new \Exception( 'Invalid instance url' );
 		}
 		$client_info = $this->get_client_info( $domain );
 
@@ -48,15 +47,13 @@ class InstanceRegistry extends Singleton {
 		$options           = array_intersect_key( array_merge( $params, $this->get_instance_info( $domain ) ), array_flip( $option_keys ) );
 		$options['domain'] = $domain;
 
-		$instances_table_name = $wpdb->prefix . self::INSTANCES_TABLE_NAME;
-		return $wpdb->replace( $instances_table_name, $options );
+		return $wpdb->replace( $wpdb->prefix . 'wpgmastodon_instances', $options );
 	}
 
 	public function get_all_client_info() {
 		global $wpdb;
 
-		$instances_table_name = $wpdb->prefix . self::INSTANCES_TABLE_NAME;
-		foreach ( $wpdb->get_results( "SELECT domain, clientId, clientSecret, title, icon, groupId FROM $instances_table_name", ARRAY_A ) as $row ) {
+		foreach ( $wpdb->get_results( "SELECT domain, clientId, clientSecret, title, icon, groupId FROM {$wpdb->prefix}wpgmastodon_instances", ARRAY_A ) as $row ) {
 			$client_info_list[ $row['domain'] ] = $row;
 		}
 		return $client_info_list;
@@ -65,10 +62,9 @@ class InstanceRegistry extends Singleton {
 	public function get_client_info( $domain ) {
 		global $wpdb;
 
-		$instances_table_name = $wpdb->prefix . self::INSTANCES_TABLE_NAME;
 		return $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT clientId, clientSecret, title, icon, groupId FROM $instances_table_name WHERE domain=%s", $domain
+				"SELECT clientId, clientSecret, title, icon, groupId FROM {$wpdb->prefix}wpgmastodon_instances WHERE domain=%s", $domain
 			), ARRAY_A
 		);
 	}

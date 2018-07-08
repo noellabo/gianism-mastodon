@@ -1,6 +1,6 @@
 {
   "name": "noellabo/gianism-mastodon",
-  "description": "A plugin which make you WordPress more social.",
+  "description": "This plugin add mastodon to Gianism",
   "type": "wordpress-plugin",
   "license": "GPL-2.0",
   "authors": [

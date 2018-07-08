@@ -1,0 +1,6 @@
+./includes/InstanceRegistry.php
+./includes/Mastodon.php
+./templates/setting.php
+./templates/setup.php
+functions.php
+gianism-mastodon.php

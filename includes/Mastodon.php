@@ -31,14 +31,14 @@ class Mastodon extends NoMailService {
 	public $verbose_service_name = 'Mastodon';
 
 	/**
-	 * mastodon's allow instance list
+	 * mastodon app name
 	 *
-	 * @var array
+	 * @var string
 	 */
 	public $mastodon_app_name = '';
 
 	/**
-	 * mastodon's allow instance list
+	 * mastodon's login button list
 	 *
 	 * @var string
 	 */
@@ -51,6 +51,26 @@ class Mastodon extends NoMailService {
 	 */
 	public $mastodon_deny_instance_list = '';
 
+	/**
+	 * comment link enabled
+	 *
+	 * @var bool
+	 */
+	public $comment_link_enabled = false;
+
+	/**
+	 * comment link acct consent explanation
+	 *
+	 * @var string
+	 */
+	public $comment_link_acct_consent_explanation = '';
+
+	/**
+	 * comment link template
+	 *
+	 * @var string
+	 */
+	public $comment_link_template = '';
 
 	/**
 	 * User meta key for mastodon accounts array
@@ -60,15 +80,32 @@ class Mastodon extends NoMailService {
 	public $umeta_accounts = '_wpg_mastodon_accounts';
 
 	/**
+	 * User meta key for comment link account
+	 *
+	 * @var string
+	 */
+	public $umeta_comment_link_acct = '_wpg_comment_link_acct';
+
+	/**
+	 * User meta key for comment link account access token
+	 *
+	 * @var string
+	 */
+	public $umeta_comment_link_acct_access_token = '_wpg_comment_link_acct_access_token';
+
+	/**
 	 * Option key to copy
 	 *
 	 * @var array
 	 */
 	protected $option_keys = [
-		'mastodon_enabled'            => false,
-		'mastodon_app_name'           => '',
-		'mastodon_login_button_list'  => '*',
-		'mastodon_deny_instance_list' => '',
+		'mastodon_enabled'                      => false,
+		'mastodon_app_name'                     => '',
+		'mastodon_login_button_list'            => '*',
+		'mastodon_deny_instance_list'           => '',
+		'comment_link_enabled'                  => false,
+		'comment_link_acct_consent_explanation' => '',
+		'comment_link_template'                 => "%comment%\n\n%title%\n%url%",
 	];
 
 	/**
@@ -82,7 +119,9 @@ class Mastodon extends NoMailService {
 	 * @param array $argument
 	 */
 	public function __construct( array $argument = [] ) {
-		$this->option_keys['mastodon_app_name'] = get_bloginfo( 'name' );
+		$this->option_keys['mastodon_app_name']                     = get_bloginfo( 'name' );
+		$this->option_keys['comment_link_acct_consent_explanation'] =
+			sprintf( $this->_( 'If you allow this setting, when you post a comment, %s will post on your Mastodon account.' ), get_bloginfo( 'name' ) );
 		parent::__construct( $argument );
 		// Filter rewrite name
 		add_filter(
@@ -96,12 +135,97 @@ class Mastodon extends NoMailService {
 		add_action(
 			'admin_enqueue_scripts', [ $this, 'print_script' ]
 		);
+		if ( $this->comment_link_enabled ) {
+			add_action( 'show_password_fields', [ $this, 'set_user_profile' ] );
+			add_action( 'comment_post', [ $this, 'comment_toot' ], 10, 3 );
+		}
+		$this->rest_api_init();
+	}
+
+	public function rest_api_init() {
+		add_action(
+			'rest_api_init', function () {
+				register_rest_route(
+					'gianism-mastodon/v1', '/instance', array(
+						'methods'  => 'GET',
+						'callback' => function( $data ) {
+							try {
+								$mastodon = Mastodon::get_instance();
+								$instance_registry = InstanceRegistry::get_instance();
+								$instance_url = $instance_registry->get_valid_domain( $data['url'] );
+								if ( false === $instance_url ) {
+									throw new \Exception( sprintf( 'Invalid instance url: %s', $data['url'] ) );
+								}
+								if ( $mastodon->is_deny_instance( $instance_url ) ) {
+									throw new \Exception( sprintf( 'Deny instance: %s', $data['url'] ) );
+								}
+								$response = new \WP_REST_Response( $instance_registry->get_instance_info( $instance_url ) );
+								$response->set_status( 200 );
+								return $response;
+							} catch ( \Exception $e ) {
+								return new \WP_Error( 'no_instance', $e->getMessage(), array( 'status' => 404 ) );
+							}
+						},
+					)
+				);
+				register_rest_route(
+					'gianism-mastodon/v1', '/extract_domain', array(
+						'methods'  => 'POST',
+						'callback' => function() {
+							try {
+								$data = $_POST;
+								$instance_registry = InstanceRegistry::get_instance();
+								$instance_url = $instance_registry->get_valid_domain( $data['url'] );
+								if ( false === $instance_url ) {
+									throw new \Exception( sprintf( 'Invalid instance url: %s', $data['url'] ) );
+								}
+								$response = new \WP_REST_Response( [ 'instance_url' => $instance_url ] );
+								$response->set_status( 200 );
+								return $response;
+							} catch ( \Exception $e ) {
+								return new \WP_Error( 'no_domain', $e->getMessage(), array( 'status' => 400 ) );
+							}
+						},
+					)
+				);
+				register_rest_route(
+					'gianism-mastodon/v1', '/comment_link', array(
+						'methods'  => 'DELETE',
+						'callback' => function( $data ) {
+							try {
+								if ( ! is_user_logged_in() ) {
+									throw new \Exception( $this->_( 'You must be logged in' ) );
+								}
+								$acct = get_user_meta( get_current_user_id(), $this->umeta_comment_link_acct, true );
+								delete_user_meta( get_current_user_id(), $this->umeta_comment_link_acct );
+								delete_user_meta( get_current_user_id(), $this->umeta_comment_link_acct_access_token );
+								$response = new \WP_REST_Response( [ 'acct' => $acct ] );
+								$response->set_status( 200 );
+								return $response;
+							} catch ( \Exception $e ) {
+								return new \WP_Error( 'not_login', $e->getMessage(), array( 'status' => 400 ) );
+							}
+						},
+					)
+				);
+			}
+		);
 	}
 
 	public function print_script() {
+		wp_enqueue_script( 'wp-api', bloginfo( 'url' ) . '/wp-content/plugins/rest-api/wp-api.js' );
+		wp_localize_script(
+			'wp-api', 'WP_API_Settings', array(
+				'root'  => esc_url_raw( rest_url() ),
+				'nonce' => wp_create_nonce( 'wp_rest' ),
+			)
+		);
+		wp_enqueue_script( 'jquery-ui-dialog' );
+		wp_enqueue_style( 'jquery-ui-dialog-min-css', includes_url() . 'css/jquery-ui-dialog.min.css' );
 		wp_enqueue_script( 'font-awesome', 'https://use.fontawesome.com/releases/v5.0.13/js/all.js' );
 		wp_script_add_data( 'font-awesome', array( 'integrity', 'crossorigin' ), array( 'sha384-xymdQtn1n3lH2wcu0qhcdaOpQwyoarkgLVxC/wZ5q7h9gHtxICrpcaSUfygqZGOe', 'anonymous' ) );
 		wp_enqueue_style( 'gianism-mastodon-style', plugins_url( 'assets/css/gianism-mastodon-style.css', dirname( __FILE__ ) ) );
+		wp_enqueue_script( 'gianism-mastodon-script', plugins_url( 'assets/js/gianism-mastodon-script.js', dirname( __FILE__ ) ) );
 	}
 
 	/**
@@ -114,7 +238,6 @@ class Mastodon extends NoMailService {
 	 */
 	public function is_connected( $user_id, $account_id = '' ) {
 		$accounts = get_user_meta( $user_id, $this->umeta_accounts, false );
-		var_dump( $accounts );
 		if ( in_array( $account_id, $accounts ) ) {
 			return $account_id;
 		} else {
@@ -218,6 +341,31 @@ class Mastodon extends NoMailService {
 				} catch ( \Exception $e ) {
 					$this->auth_fail( $e->getMessage() );
 					$redirect_url = $this->filter_redirect( $redirect_url, 'connect-failure' );
+				}
+				wp_redirect( $redirect_url );
+				exit;
+				break;
+			case 'expand':
+				try {
+					// Is user logged in?
+					if ( ! is_user_logged_in() ) {
+						throw new \Exception( $this->_( 'You must be logged in' ) );
+					}
+					// Get user info
+					list($user_info, $token) = $this->get_user_profile_expand( $code, $state, $saved_state );
+					$owner                   = $this->get_meta_owner( $this->umeta_accounts, $user_info->getAcct() );
+					if ( ! $owner ) {
+						throw new \Exception( $this->_( 'You must be connected account' ) );
+					}
+					// O.k.
+					update_user_meta( get_current_user_id(), $this->umeta_comment_link_acct, $user_info->getAcct() );
+					update_user_meta( get_current_user_id(), $this->umeta_comment_link_acct_access_token, $token );
+					$this->hook_connect( get_current_user_id(), $user_info->toArray(), false );
+					$this->add_message( $this->_( 'Write permission recorded!' ) );
+					$redirect_url = $this->filter_redirect( $redirect_url, 'expand' );
+				} catch ( \Exception $e ) {
+					$this->auth_fail( $e->getMessage() );
+					$redirect_url = $this->filter_redirect( $redirect_url, 'expand-failure' );
 				}
 				wp_redirect( $redirect_url );
 				exit;
@@ -341,6 +489,9 @@ EOS;
 		}
 
 		printf( $html, $html_connect, $html_disconnect );
+		add_action( 'admin_footer-profile.php', [ $this, 'instance_entry_dialog' ] );
+		add_action( 'admin_footer-profile.php', [ $this, 'comment_link_acct_dialog' ] );
+		add_action( 'admin_footer-profile.php', [ $this, 'comment_link_acct_delete_dialog' ] );
 	}
 
 	/**
@@ -454,6 +605,12 @@ EOS;
 		}
 	}
 
+	public function login_form( $is_register = false, $redirect_to = '', $context = '' ) {
+		add_action( 'wp_footer', [ $this, 'instance_entry_dialog' ] );
+		add_action( 'login_footer', [ $this, 'instance_entry_dialog' ] );
+		parent::login_form( $is_register, $redirect_to, $context );
+	}
+
 	/**
 	 * Show login button
 	 *
@@ -490,7 +647,18 @@ EOS;
 			);
 			$text      = sprintf( $this->_( 'Log in with %s' ), $instance_info['name'] );
 			$button    = $this->button(
-				$text, $url, $instance_info['icon'], array( 'wpg-button', 'wpg-button-login' ), $this->array_filter_empty_value(
+				$text,
+				$url,
+				$instance_info['icon'],
+				$this->array_filter_empty_value(
+					array_merge(
+						[
+							'wpg-button',
+							'wpg-button-login',
+						], isset( $instance_info['classes'] ) ? $instance_info['classes'] : []
+					)
+				),
+				$this->array_filter_empty_value(
 					array_merge(
 						[
 							'gianism-ga-category' => "gianism/{$this->service_name}",
@@ -498,7 +666,8 @@ EOS;
 							'gianism-ga-label'    => sprintf( $this->_( 'Login with %s' ), $instance_info['name'] ),
 						], isset( $instance_info['attributes'] ) ? $instance_info['attributes'] : []
 					)
-				), $context
+				),
+				$context
 			);
 			$buttons[] = $this->filter_link( $button, $url, $text, $register, $context, $instance_info );
 		}
@@ -516,7 +685,7 @@ EOS;
 		if ( empty( $redirect_to ) ) {
 			$redirect_to = admin_url( 'profile.php' );
 		}
-		$url  = $this->get_redirect_endpoint(
+		$url     = $this->get_redirect_endpoint(
 			'connect', $this->service_name . '_connect', $this->array_filter_empty_value(
 				array(
 					'redirect_to'  => $redirect_to,
@@ -524,7 +693,13 @@ EOS;
 				)
 			)
 		);
-		$args = array_merge(
+		$classes = array_merge(
+			[
+				'wpg-button',
+				'connect',
+			], isset( $instance_info['classes'] ) ? $instance_info['classes'] : []
+		);
+		$args    = array_merge(
 			[
 				'gianism-ga-category' => "gianism/{$this->service_name}",
 				'gianism-ga-action'   => 'connect',
@@ -532,7 +707,7 @@ EOS;
 			], isset( $instance_info['attributes'] ) ? $instance_info['attributes'] : []
 		);
 
-		return $this->button( sprintf( $this->_( 'Connect %s' ), $instance_info['name'] ), $url, 'link', array( 'wpg-button', 'connect' ), $args );
+		return $this->button( sprintf( $this->_( 'Connect %s' ), $instance_info['name'] ), $url, 'link', $classes, $args );
 	}
 
 	/**
@@ -546,7 +721,7 @@ EOS;
 		if ( empty( $redirect_to ) ) {
 			$redirect_to = admin_url( 'profile.php' );
 		}
-		$url  = $this->get_redirect_endpoint(
+		$url     = $this->get_redirect_endpoint(
 			'disconnect', $this->service_name . '_disconnect', $this->array_filter_empty_value(
 				array(
 					'redirect_to' => $redirect_to,
@@ -554,14 +729,67 @@ EOS;
 				)
 			)
 		);
-		$args = [
+		$classes = array_merge(
+			[
+				'wpg-button',
+				'disconnect',
+			], isset( $instance_info['classes'] ) ? $instance_info['classes'] : []
+		);
+		$args    = [
 			'gianism-ga-category' => "gianism/{$this->service_name}",
 			'gianism-ga-action'   => 'disconnect',
 			'gianism-ga-label'    => sprintf( $this->_( 'Disconnect %s' ), $acct ),
 			'gianism-confirm'     => sprintf( $this->_( 'You really disconnect from %s? If so, please be sure about your credential(email, passowrd), or else you might not be able to login again.' ), $this->verbose_service_name ),
 		];
 
-		return $this->button( sprintf( $this->_( 'Disconnect %s' ), $acct ), $url, 'logout', array( 'wpg-button', 'disconnect' ), $args );
+		return $this->button( sprintf( $this->_( 'Disconnect %s' ), $acct ), $url, 'logout', $classes, $args );
+	}
+
+	public function instance_entry_dialog() {
+		$html = <<<EOS
+		<div class="ui-widget" id="connect_to_instance" title="%s">
+			<label for="instance_url">%s</label><br>
+			<input class="ui-widget-content ui-corner-all" type="text" name="instance_url" id="instance_url" value="">
+			<p class="ui-state-error-text ui-helper-hidden" id="connect_to_instance_error">%s</p>
+
+			<h4>%s</h4>
+			<ul id="recentry-instances">
+			</ul>
+		</div>
+EOS;
+		echo sprintf(
+			$html,
+			$this->_( 'Connect to instance' ),
+			$this->_( 'Please enter the URL of the instance' ),
+			$this->_( 'The format is incorrect, or a URL that is not Mastodon is specified.' ),
+			$this->_( 'Select from recent instance' )
+		);
+	}
+
+	public function comment_link_acct_dialog() {
+		$html = <<<EOS
+		<div class="ui-widget" id="comment_link_acct_dialog" title="%s">
+			<p>%s</p>
+		</div>
+EOS;
+		echo sprintf(
+			$html,
+			$this->_( 'Comment link acct consent explanation' ),
+			$this->comment_link_acct_consent_explanation
+		);
+	}
+
+	public function comment_link_acct_delete_dialog() {
+		$html = <<<EOS
+		<div class="ui-widget" id="comment_link_acct_delete_dialog" title="%s">
+			<p>%s</p>
+		</div>
+EOS;
+		echo sprintf(
+			$html,
+			$this->_( 'Confirm delete comment link acct' ),
+			$this->_( 'Would you like to release the comment linkage?' )
+		);
 	}
 
 	protected function get_instance_info_list() {
@@ -570,18 +798,18 @@ EOS;
 			$key = trim( $key );
 			if ( empty( $key ) ) {
 				continue;
-			} elseif ( '*' == $key ) {
+			}
+			list($key, $name) = explode( ',', $key ) + [ null, null ];
+			if ( '*' == $key ) {
 				$instance_info_list[] = [
-					'url'        => $key,
-					'name'       => $this->verbose_service_name,
-					'icon'       => '<i class="fab fa-mastodon wpg-mastodon-fa-color wpg-mastodon-fa-lsf"></i> ',
-					'attributes' => [
-						'onclick' => "javascript:alert('not implimentation');return false;",
-					],
+					'url'     => $key,
+					'name'    => empty( $name ) ? $this->verbose_service_name : $name,
+					'icon'    => '<i class="fab fa-mastodon wpg-mastodon-fa-color wpg-mastodon-fa-lsf"></i> ',
+					'classes' => [ 'with-instance-dialog' ],
 				];
 			} else {
 				$key = $this->instance_registry->get_valid_domain( $key );
-				if ( false === $key ) {
+				if ( false === $key || $this->is_deny_instance( $key ) ) {
 					continue;
 				} elseif ( false === \array_key_exists( $key, $instances ) ) {
 					$provider    = $this->instance_registry->get_provider( $key, $this->mastodon_app_name, $this->get_redirect_endpoint(), site_url() );
@@ -591,12 +819,21 @@ EOS;
 				}
 				$instance_info_list[] = [
 					'url'  => $key,
-					'name' => $client_info['title'],
+					'name' => '<i>' . ( empty( $name ) ? $client_info['title'] : $name ) . '</i>',
 					'icon' => '<i class="fab fa-mastodon wpg-mastodon-fa-color wpg-mastodon-fa-lsf"></i> ',
 				];
 			}
 		}
 		return $instance_info_list;
+	}
+
+	public function is_deny_instance( $instance_url ) {
+		foreach ( explode( "\n", $this->mastodon_deny_instance_list ) as $deny_regex ) {
+			if ( ! empty( $deny_regex ) && preg_match( trim( $deny_regex ), $instance_url ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	protected function array_filter_empty_value( array $array ) {
@@ -605,16 +842,6 @@ EOS;
 				return ! empty( $val );
 			}
 		);
-	}
-
-	protected function get_instance_info_list_() {
-		return [
-			[
-				'url'  => '',
-				'name' => $this->verbose_service_name,
-				'icon' => $this->service_name,
-			],
-		];
 	}
 
 	/**
@@ -639,6 +866,27 @@ EOS;
 	}
 
 	/**
+	 * Get user profile expand
+	 *
+	 * @param string $code
+	 * @param string $state
+	 * @param string $saved_state
+	 *
+	 * @return array
+	 * @throws \Exception
+	 */
+	private function get_user_profile_expand( $code, $state, $saved_state ) {
+		$token = $this->get_access_token_expand( $code, $state, $saved_state );
+		try {
+			$user_info = $this->provider->getResourceOwner( $token );
+		} catch ( \Exception $e ) {
+			throw new \Exception( $this->mail_fail_string() );
+		}
+
+		return [ $user_info, $token->getToken() ];
+	}
+
+	/**
 	 * Get token
 	 *
 	 * @param string $code
@@ -654,7 +902,31 @@ EOS;
 		}
 		$token = $this->provider->getAccessToken(
 			'authorization_code', [
-				'code' => $code,
+				'code'  => $code,
+				'scope' => 'read:accounts',
+			]
+		);
+		return $token;
+	}
+
+	/**
+	 * Get token expand
+	 *
+	 * @param string $code
+	 * @param string $state
+	 * @param string $saved_state
+	 *
+	 * @return bool
+	 * @throws \Exception
+	 */
+	private function get_access_token_expand( $code, $state, $saved_state ) {
+		if ( ! $code || ! $state || ! $saved_state || $state != $saved_state ) {
+			throw new \Exception( $this->api_error_string() );
+		}
+		$token = $this->provider->getAccessToken(
+			'authorization_code', [
+				'code'  => $code,
+				'scope' => 'read write',
 			]
 		);
 		return $token;
@@ -705,6 +977,15 @@ EOS;
 				$this->session->write( 'state', $this->provider->getState() );
 				return $url;
 				break;
+			case 'expand':
+				$url = $this->provider->getAuthorizationUrl(
+					[
+						'scope' => 'read write',
+					]
+				);
+				$this->session->write( 'state', $this->provider->getState() );
+				return $url;
+				break;
 			default:
 				return false;
 				break;
@@ -728,6 +1009,144 @@ EOS;
 				break;
 		}
 	}
+
+	/**
+	 * Create valid username from email address
+	 *
+	 * @param string $email
+	 *
+	 * @return string
+	 * @throws \Exception
+	 */
+	protected function valid_username_from_mail( $email ) {
+		$email_elements = explode( '@', $email );
+		$suffix         = array_shift( $email_elements );
+		if ( ! username_exists( $suffix ) ) {
+			return $suffix;
+		}
+		$service_domain = $suffix . '@' . $this->service_name;
+		if ( ! username_exists( $service_domain ) ) {
+			return $service_domain;
+		}
+		$original_domain = $suffix . '@' . $_SERVER['SERVER_NAME'];
+		if ( ! username_exists( $original_domain ) ) {
+			return $original_domain;
+		}
+		throw new \Exception( $this->_( 'Sorry, but cannot create valid user name.' ) );
+	}
+
+	/**
+	 * Handle expand
+	 *
+	 * @param \WP_Query $wp_query
+	 */
+	protected function handle_expand( \WP_Query $wp_query ) {
+		try {
+			// Is user logged in?
+			if ( ! is_user_logged_in() ) {
+				throw new \Exception( $this->_( 'You must be logged in.' ) );
+			}
+			// Set redirect URL
+			$url = $this->get_api_url( 'expand' );
+			if ( ! $url ) {
+				throw new \Exception( $this->_( 'Sorry, but failed to expand with API.' ) );
+			}
+			// Write session
+			$this->session->write( 'redirect_to', $this->input->get( 'redirect_to' ) );
+			$this->session->write( 'action', 'expand' );
+			// OK, let's redirect.
+			wp_redirect( $url );
+			exit;
+		} catch ( \Exception $e ) {
+			$this->input->wp_die( $e->getMessage() );
+		}
+	}
+
+	public function set_user_profile( $bool ) {
+		global $profileuser;
+		if ( get_current_user_id() != $profileuser->ID ) {
+			return $bool;
+		}
+
+		$html                 = <<<EOM
+		<tr><th><label for="comment_link_acct">%s</label></th><td>
+		<select name="comment_link_acct" id="comment_link_acct" data-href="%s">
+		%s
+		</select>
+		<p class="description">%s<p>
+		</td></tr>
+EOM;
+		$comment_link_account = get_user_meta( get_current_user_id(), $this->umeta_comment_link_acct, true );
+		$accounts             = get_user_meta( get_current_user_id(), $this->umeta_accounts, false );
+		array_unshift( $accounts, '' );
+		$option_tags = '';
+		foreach ( $accounts as $account ) {
+			$option_tags .= '<option value="' . $account . '"'
+				. ( ( $comment_link_account == $account ) ? ' selected="selected"' : '' ) . '>'
+				. ( ( '' == $account ) ? $this->_( '(No selection)' ) : $account ) . '</option>' . "\n";
+		}
+		echo sprintf(
+			$html,
+			$this->_( 'Comment Link Acct' ),
+			$this->get_redirect_endpoint(
+				'expand', $this->service_name . '_expand',
+				[
+					'redirect_to'  => admin_url( 'profile.php' ),
+					'instance_url' => '',
+				]
+			),
+			$option_tags,
+			$this->_( 'Specify the mastodon instance to be linked posting at the time of comment.' )
+		);
+
+		return $bool;
+	}
+
+	public function comment_toot( $comment_id, $comment_approved, $commentdata ) {
+		if ( get_current_user_id() != $commentdata['user_ID'] ) {
+			return;
+		}
+		$acct  = get_user_meta( get_current_user_id(), $this->umeta_comment_link_acct, true );
+		$token = get_user_meta( get_current_user_id(), $this->umeta_comment_link_acct_access_token, true );
+		if ( ! $acct ) {
+			return;
+		}
+		$instance_url = $this->instance_registry->get_valid_domain( $acct );
+		$post         = get_post( $commentdata['comment_post_ID'], 'ARRAY_A' );
+		$status       = preg_replace(
+			[ '/%comment%/', '/%title%/', '/%url%/' ],
+			[
+				$commentdata['comment_content'],
+				$post['post_title'],
+				$post['guid'],
+			],
+			$this->comment_link_template
+		);
+
+		$param = [
+			'method'      => 'POST',
+			'timeout'     => '5',
+			'redirection' => '5',
+			'httpversion' => '1.0',
+			'blocking'    => true,
+			'cookies'     => [],
+			'user-agent'  => isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko',
+			'body'        => [
+				'access_token' => $token,
+				'status'       => $status,
+				'visibility'   => 'public',
+			],
+		];
+
+		$response = wp_remote_request( esc_url_raw( $instance_url ) . '/api/v1/statuses', $param );
+		if ( is_wp_error( $response ) ) {
+			throw new \Exception( 'WP_Error: ' . $response->get_error_message() );
+		} elseif ( wp_remote_retrieve_response_code( $response ) !== 200 ) {
+			throw new \Exception( 'Invalid API response:' . wp_remote_retrieve_response_message( $response ) );
+		}
+		return json_decode( wp_remote_retrieve_body( $response ), true );
+	}
+
 
 	/**
 	 * Getter

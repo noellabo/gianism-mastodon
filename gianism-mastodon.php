@@ -1,20 +1,21 @@
 <?php
 
-/*
-Plugin Name: Gianism Mastodon
-Plugin URI: https://noellabo.jp/gianism-mastodon/
-Description: This plugin add mastodon to Gianism.
-Author: noellabo
-Version: 0.1.0
-License: GPL 2.0 or later
-Author URI: https://noellabo.jp
-*/
+/**
+ * Plugin Name: Gianism Mastodon
+ * Plugin URI: https://noellabo.jp/gianism-mastodon/
+ * Description: This plugin add mastodon to Gianism.
+ * Author: noellabo
+ * Version: 0.1.0
+ * PHP Version: 5.4.0
+ * License: GPL 2.0 or later
+ * Author URI: https://noellabo.jp
+ * Text Domain: wp-gianism
+ * Domain Path: language/
+ */
 
 defined( 'ABSPATH' ) or die();
 
 require_once 'vendor/autoload.php';
-
-load_plugin_textdomain( 'gimastodon', false, __DIR__ . '/languages' );
 
 require __DIR__ . '/functions.php';
 
@@ -36,6 +37,7 @@ add_action(
 				}
 			);
 		}
+		load_plugin_textdomain( 'wp-gianism', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 		gianism_mastodon_update_db_check();
 	}
 );
@@ -50,3 +52,4 @@ add_filter(
 		return $services;
 	}
 );
+

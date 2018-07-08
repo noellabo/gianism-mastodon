@@ -14,6 +14,8 @@ if ( ! defined( 'ABSPATH' ) && ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 // Delete Option
 delete_option( 'wpgmastodon_instances_table_version' );
+delete_option( '_wpg_comment_link_acct' );
+delete_option( '_wpg_comment_link_acct_access_token' );
 
 $values = get_option( 'wp_gianism_option' );
 if ( $values !== false ) {
@@ -29,7 +31,7 @@ if ( $values !== false ) {
 global $wpdb;
 $query = <<<EOS
     DELETE FROM {$wpdb->usermeta}
-    WHERE meta_key LIKE '_wpgmastodon_%'
+    WHERE meta_key LIKE '_wpg_mastodon_%'
 EOS;
 $wpdb->query( $query );
 

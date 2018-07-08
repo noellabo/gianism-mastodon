@@ -8,7 +8,7 @@ Stable tag: 0.1.0
 License: GPL 2.0 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Add on for Gianism. You can log in to your WordPress site via mastodon
+Add on for gianism-mastodon. You can log in to your WordPress site via mastodon
 
 ## Description
 

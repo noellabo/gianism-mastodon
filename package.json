@@ -7,7 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "gulp build && gulp watch",
     "watch": "gulp watch",
-    "package": "gulp build"
+    "package": "gulp build",
+    "xgettext": "xgettext --language=PHP --from-code=utf-8 -f ./languages/php_files.list -k_ -k__ -ke -k_e -o ./languages/wp-gianism.pot",
+    "msgmerge": "msgmerge --update --backup=none ./languages/wp-gianism-ja.po ./languages/wp-gianism.pot",
+    "msgfmt": "msgfmt ./languages/wp-gianism-ja.po -o ./languages/wp-gianism-ja.mo"
   },
   "author": "noellabo",
   "license": "GPL-2.0",

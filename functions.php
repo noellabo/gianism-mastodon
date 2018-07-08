@@ -30,7 +30,7 @@ function gianism_mastodon_db_init() {
 			groupId tinyint,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (domain(255))
+			PRIMARY KEY (domain(191))
 		) $charset_collate;";
 
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );

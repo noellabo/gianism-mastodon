@@ -45,6 +45,43 @@ defined( 'ABSPATH' ) or die();
 				</p>
 			</td>
 		</tr>
+		<tr>
+			<th><?php $this->e( 'Comments linked post' ); ?></th>
+			<td>
+				<label for="comment_link_enabled"><input type="checkbox" id="comment_link_enabled" name="comment_link_enabled"<?php
+					echo ($instance->comment_link_enabled) ? ' checked="checked"' : '' ?>>
+				<?php printf( $this->_( 'To enable commnets linked post.' ) ); ?></label>
+			</td>
+		</tr>
+		<tr>
+			<th><label for="comment_link_acct_consent_explanation"><?php $this->e( 'Consent explanation' ); ?></label></th>
+			<td>
+				<textarea id="comment_link_acct_consent_explanation" name="comment_link_acct_consent_explanation" class="large-text code" rows="3"><?php
+					echo esc_textarea( $instance->comment_link_acct_consent_explanation ) . "\n";
+				?></textarea>
+				<p class="description">
+				<?php printf( $this->_( 'Please describe the notes on allowing comments linked posting.' ) ); ?>
+				</p>
+			</td>
+		</tr>
+		<tr>
+			<th><label for="comment_link_template"><?php $this->e( 'Comment link template' ); ?></label></th>
+			<td>
+				<textarea id="comment_link_template" name="comment_link_template" class="large-text code" rows="6"><?php
+					echo esc_textarea( $instance->comment_link_template ) . "\n";
+				?></textarea>
+				<div class="tag_insert_buttons" data-for="comment_link_template">
+					<?php $this->e('Available Tags') ?>
+					<button type="button">%comment%</button>
+					<button type="button">%title%</button>
+					<button type="button">%url%</button>
+				</div>
+				<p class="description">
+				<?php printf( $this->_( 'Please describe the template of the comments linked post.' ) ); ?>
+				</p>
+			</td>
+		</tr>
 		</tbody>
 	</table>
 <?php submit_button(); ?>
+
