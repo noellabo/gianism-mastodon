@@ -75,6 +75,7 @@ defined( 'ABSPATH' ) or die();
 					<button type="button">%comment%</button>
 					<button type="button">%title%</button>
 					<button type="button">%url%</button>
+					<button type="button">%site_name%</button>
 				</div>
 				<p class="description">
 				<?php printf( $this->_( 'Please describe the template of the comments linked post.' ) ); ?>

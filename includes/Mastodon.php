@@ -1114,11 +1114,12 @@ EOM;
 		$instance_url = $this->instance_registry->get_valid_domain( $acct );
 		$post         = get_post( $commentdata['comment_post_ID'], 'ARRAY_A' );
 		$status       = preg_replace(
-			[ '/%comment%/', '/%title%/', '/%url%/' ],
+			[ '/%comment%/', '/%title%/', '/%url%/', '/%site_name%/' ],
 			[
 				$commentdata['comment_content'],
 				$post['post_title'],
-				$post['guid'],
+				get_permalink($post['ID']),
+				get_bloginfo( 'name' ),
 			],
 			$this->comment_link_template
 		);
@@ -1134,7 +1135,7 @@ EOM;
 			'body'        => [
 				'access_token' => $token,
 				'status'       => $status,
-				'visibility'   => 'public',
+				'visibility'   => 'direct',
 			],
 		];
 
