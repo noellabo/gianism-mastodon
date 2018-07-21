@@ -1143,9 +1143,20 @@ EOM;
 		if ( ! $acct ) {
 			return;
 		}
-		$post            = get_post( $commentdata['comment_post_ID'], 'ARRAY_A' );
-		$comment_content = $commentdata['comment_content'];
-		$replace_tags    = [
+
+		mb_internal_encoding( 'UTF-8' );
+		mb_regex_encoding( 'UTF-8' );
+
+		$post                = get_post( $commentdata['comment_post_ID'], 'ARRAY_A' );
+		$comment_content     = $commentdata['comment_content'];
+		$comment_content_len = mb_strlen( $comment_content );
+		$comment_parent      = $commentdata['comment_parent'];
+		if ( '' != $comment_parent ) {
+			$status_uri               = get_comment_meta( $comment_parent, 'status_uri', true );
+			$comment_parent_status_id = substr( $status_uri, strrpos( $status_uri, '/' ) + 1 );
+		}
+
+		$replace_tags = [
 			'/%title%/'       => $post['post_title'],
 			'/%slug%/'        => $post['post_name'],
 			'/%post_url%/'    => get_permalink( $post['ID'] ),
@@ -1155,37 +1166,40 @@ EOM;
 		];
 
 		$spoiler_text       = $this->tag_replace( $this->comment_link_spoiler_text, $replace_tags );
-		$content_length_max = $this->comment_link_max_length - strlen( $spoiler_text ) -
-			strlen( $this->tag_replace( $this->comment_link_template, $replace_tags ) );
+		$content_length_max = $this->comment_link_max_length - mb_strlen( $spoiler_text ) -
+			mb_strlen( $this->tag_replace( $this->comment_link_template, $replace_tags ) );
 
 		$status = [
 			'visibility' => 'public',
 		] + ( empty( $spoiler_text ) ? [] : [
 			'sensitive'    => true,
 			'spoiler_text' => $spoiler_text,
+		] ) + ( empty( $comment_parent_status_id ) ? [] : [
+			'in_reply_to_id' => $comment_parent_status_id,
 		] );
 
 		try {
-			if ( strlen( $comment_content ) > $content_length_max ) {
+			if ( $comment_content_len > $content_length_max ) {
 				$content_length_max -= 7; // '… (1/9)'
-				$split_num           = ceil( strlen( $comment_content ) / $content_length_max );
+				$split_num           = ceil( $comment_content_len / $content_length_max );
 				if ( $split_num > 20 ) {
 					throw new \Exception( 'Too many divisions of comment content.' );
 				} elseif ( $split_num >= 10 ) {
 					$content_length_max -= 2;
-					$split_num           = ceil( strlen( $comment_content ) / $content_length_max );
+					$split_num           = ceil( $comment_content_len / $content_length_max );
 				}
-				$split_contents = str_split( $comment_content, $content_length_max );
-				$counter        = 1;
+				for ( $pos = 0; $pos < $comment_content_len; $pos += $content_length_max ) {
+					$split_contents[] = mb_substr( $comment_content, $pos, $content_length_max );
+				}
+				$counter = 1;
 				foreach ( $split_contents as $split_content ) {
-					$status['status']                 = $this->tag_replace(
+					$status['status']         = $this->tag_replace(
 						$this->comment_link_template, $replace_tags,
 						$split_content . sprintf( '… (%d/%d)', $counter, $split_num )
 					);
-					$posted_status                    = $this->mastodon_post_status( $acct, $token, $status );
-					$status['in_reply_to_id']         = $posted_status['id'];
-					$status['in_reply_to_account_id'] = $posted_status['account']['id'];
-					$posted_statuses[]                = $posted_status;
+					$posted_status            = $this->mastodon_post_status( $acct, $token, $status );
+					$status['in_reply_to_id'] = $posted_status['id'];
+					$posted_statuses[]        = $posted_status;
 					$counter++;
 				}
 			} else {
