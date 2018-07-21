@@ -72,15 +72,43 @@ defined( 'ABSPATH' ) or die();
 				?></textarea>
 				<div class="tag_insert_buttons" data-for="comment_link_template">
 					<?php $this->e('Available Tags') ?>
-					<button type="button">%comment%</button>
-					<button type="button">%title%</button>
-					<button type="button">%url%</button>
-					<button type="button">%site_name%</button>
+					<button type="button" title="<?php $this->e('Comment contents') ?>">%comment%</button>
+					<button type="button" title="<?php $this->e('Title of the commented article') ?>">%title%</button>
+					<button type="button" title="<?php $this->e('Slug of the commented article') ?>">%slug%</button>
+					<button type="button" title="<?php $this->e('URL of commented article') ?>">%post_url%</button>
+					<button type="button" title="<?php $this->e('URL of comment') ?>">%comment_url%</button>
+					<button type="button" title="<?php $this->e('URL of this site') ?>">%site_url%</button>
+					<button type="button" title="<?php printf($this->_('Name of this site - "%s"'), get_bloginfo( 'name' )) ?>">%site_name%</button>
 				</div>
 				<p class="description">
 				<?php printf( $this->_( 'Please describe the template of the comments linked post.' ) ); ?>
 				</p>
 			</td>
+		</tr>
+		<tr>
+			<th><label for="comment_link_spoiler_text"><?php $this->e( 'Contents Warning (CW)' ); ?></label></th>
+			<td>
+				<textarea id="comment_link_spoiler_text" name="comment_link_spoiler_text" class="large-text code" rows="3"><?php
+					echo esc_textarea( $instance->comment_link_spoiler_text ) . "\n";
+				?></textarea>
+				<div class="tag_insert_buttons" data-for="comment_link_spoiler_text">
+					<?php $this->e('Available Tags') ?>
+					<button type="button" title="<?php $this->e('Title of the commented article') ?>">%title%</button>
+					<button type="button" title="<?php $this->e('Slug of the commented article') ?>">%slug%</button>
+					<button type="button" title="<?php $this->e('URL of commented article') ?>">%post_url%</button>
+					<button type="button" title="<?php $this->e('URL of comment') ?>">%comment_url%</button>
+					<button type="button" title="<?php $this->e('URL of this site') ?>">%site_url%</button>
+					<button type="button" title="<?php printf($this->_('Name of this site - "%s"'), get_bloginfo( 'name' )) ?>">%site_name%</button>
+				</div>
+				<p class="description">
+				<?php printf( $this->_( 'Please describe the Contents Warning (CW) template of the comments linked post.' ) ); ?>
+				</p>
+			</td>
+		</tr>
+		<tr>
+			<th><label for="comment_link_max_length"><?php $this->e( 'Maximum content length per comment link post' ); ?></label></th>
+			<td><input class="regular-text" type="number" name="comment_link_max_length" id="comment_link_max_length"
+					value="<?php echo esc_attr( $instance->comment_link_max_length ); ?>"/></td>
 		</tr>
 		</tbody>
 	</table>

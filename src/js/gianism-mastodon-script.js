@@ -167,8 +167,8 @@ jQuery(document).ready(function ($) {
 			$( "#comment_link_acct_delete_dialog" ).dialog('open');
 		}
 	});
-	$('.tag_insert_buttons').on('click', 'button', function(e) {
-		var f      = '#' + $('.tag_insert_buttons').data('for');
+	$(document).on('click', '.tag_insert_buttons', function(e) {
+		var f      = '#' + $(e.currentTarget).data('for');
 		var v      = $(f).val();
 		var selin  = $(f).prop('selectionStart');
 		var selout = $(f).prop('selectionEnd');
