@@ -168,15 +168,30 @@ jQuery(document).ready(function ($) {
 		}
 	});
 	$(document).on('click', '.tag_insert_buttons', function(e) {
-		var f      = '#' + $(e.currentTarget).data('for');
-		var v      = $(f).val();
-		var selin  = $(f).prop('selectionStart');
-		var selout = $(f).prop('selectionEnd');
-		var tag    = $(e.target).text();
-		$(f).val( v.substr(0,selin) + tag + v.substr(selout) ).prop({
-			"selectionStart": selin + tag.length,
-			"selectionEnd":   selin + tag.length,
-		})
-		.trigger("focus");
+		var target = $(e.target)[0];
+		if('BUTTON' === target.tagName) {
+			var f      = '#' + $(e.currentTarget).data('for');
+			var v      = $(f).val();
+			var selin  = $(f).prop('selectionStart');
+			var selout = $(f).prop('selectionEnd');
+			var tag    = $(target).text();
+			$(f).val( v.substr(0,selin) + tag + v.substr(selout) ).prop({
+				"selectionStart": selin + tag.length,
+				"selectionEnd":   selin + tag.length,
+			})
+			.trigger("focus");
+		} else if('I' === target.tagName || 'detail-switch' === $(target).attr('class') ) {
+			target = $(e.currentTarget).children('div');
+			if( 'open' === $(target).data('state') ) {
+				$(target).data('state', 'close').children('i').attr('class', 'far fa-plus-square');
+				$(e.currentTarget).children('button').css('width', '');
+				$(e.currentTarget).children('.title').remove();
+			} else {
+				$(target).data('state', 'open').children('i').attr('class', 'far fa-minus-square');
+				$(e.currentTarget).children('button').each(function(index, element){
+					$(element).css('width', '10em').after(' <span class="title">' + $(element).attr('title') + '<br></span>');
+				});
+			}
+		}
 	});
 });
