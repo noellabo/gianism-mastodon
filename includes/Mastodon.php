@@ -51,6 +51,55 @@ class Mastodon extends NoMailService {
 	public $mastodon_deny_instance_list = '';
 
 	/**
+	 * acct consent explanation
+	 *
+	 * @var string
+	 */
+	public $acct_consent_explanation = '';
+
+	/**
+	 * post link enabled
+	 *
+	 * @var bool
+	 */
+	public $post_link_enabled = false;
+
+	/**
+	 * post link auto or manual
+	 *
+	 * @var bool
+	 */
+	public $post_link_manual = true;
+
+	/**
+	 * post link visibility
+	 *
+	 * @var string
+	 */
+	public $post_link_visibility = 'public';
+
+	/**
+	 * post link sensitive
+	 *
+	 * @var bool
+	 */
+	public $post_link_sensitive = true;
+
+	/**
+	 * post link title template
+	 *
+	 * @var string
+	 */
+	public $post_link_title_template = '';
+
+	/**
+	 * post link content template
+	 *
+	 * @var string
+	 */
+	public $post_link_content_template = '';
+
+	/**
 	 * comment link enabled
 	 *
 	 * @var bool
@@ -58,32 +107,39 @@ class Mastodon extends NoMailService {
 	public $comment_link_enabled = false;
 
 	/**
-	 * comment link acct consent explanation
+	 * comment link visibility
 	 *
 	 * @var string
 	 */
-	public $comment_link_acct_consent_explanation = '';
+	public $comment_link_visibility = 'public';
 
 	/**
-	 * comment link template
+	 * comment link sensitive
 	 *
-	 * @var string
+	 * @var bool
 	 */
-	public $comment_link_template = '';
+	public $comment_link_sensitive = true;
 
 	/**
-	 * comment link CW template
+	 * comment link title template
 	 *
 	 * @var string
 	 */
-	public $comment_link_spoiler_text = '';
+	public $comment_link_title_template = '';
+
+	/**
+	 * comment link content template
+	 *
+	 * @var string
+	 */
+	public $comment_link_content_template = '';
 
 	/**
 	 * Maximum content length per comment link post
 	 *
 	 * @var integer
 	 */
-	public $comment_link_max_length = 500;
+	public $mastodon_content_length_max = 500;
 
 	/**
 	 * User meta key for mastodon accounts array
@@ -112,15 +168,23 @@ class Mastodon extends NoMailService {
 	 * @var array
 	 */
 	protected $option_keys = [
-		'mastodon_enabled'                      => false,
-		'mastodon_app_name'                     => '',
-		'mastodon_login_button_list'            => '*',
-		'mastodon_deny_instance_list'           => '',
-		'comment_link_enabled'                  => false,
-		'comment_link_acct_consent_explanation' => '',
-		'comment_link_template'                 => "%comment%\n\n%post_url%",
-		'comment_link_spoiler_text'             => '感想：%title%',
-		'comment_link_max_length'               => 500,
+		'mastodon_enabled'              => false,
+		'mastodon_app_name'             => '',
+		'mastodon_login_button_list'    => '*',
+		'mastodon_deny_instance_list'   => '',
+		'acct_consent_explanation'      => '',
+		'post_link_enabled'             => false,
+		'post_link_manual'              => true,
+		'post_link_visibility'          => 'public',
+		'post_link_sensitive'           => false,
+		'post_link_title_template'      => '『%title%』を公開しました。',
+		'post_link_content_template'    => "%post_excerpt%\n%post_url%",
+		'comment_link_enabled'          => false,
+		'comment_link_visibility'       => 'public',
+		'comment_link_sensitive'        => true,
+		'comment_link_title_template'   => '『%title%』へのコメント',
+		'comment_link_content_template' => "%content%\n\n%post_url%",
+		'mastodon_content_length_max'   => 500,
 	];
 
 	/**
@@ -134,9 +198,9 @@ class Mastodon extends NoMailService {
 	 * @param array $argument
 	 */
 	public function __construct( array $argument = [] ) {
-		$this->option_keys['mastodon_app_name']                     = get_bloginfo( 'name' );
-		$this->option_keys['comment_link_acct_consent_explanation'] =
-			sprintf( $this->_( 'If you allow this setting, when you post a comment, %s will post on your Mastodon account.' ), get_bloginfo( 'name' ) );
+		$this->option_keys['mastodon_app_name']        = get_bloginfo( 'name' );
+		$this->option_keys['acct_consent_explanation'] =
+			sprintf( $this->_( 'If you allow this setting, when you post, %s will post on your Mastodon account.' ), get_bloginfo( 'name' ) );
 		parent::__construct( $argument );
 		// Filter rewrite name
 		add_filter(
@@ -161,6 +225,12 @@ class Mastodon extends NoMailService {
 			add_action( 'admin_enqueue_scripts', [ $this, 'print_script' ] );
 			add_action( 'wp_footer', [ $this, 'print_script' ] );
 			add_action( 'login_footer', [ $this, 'print_script' ] );
+		}
+		if ( $this->post_link_enabled ) {
+			add_action( 'show_password_fields', [ $this, 'set_user_profile' ] );
+		}
+		if ( $this->post_link_enabled && ! $this->post_link_manual ) {
+			add_action( 'transition_post_status', [ $this, 'post_toot' ], 10, 3 );
 		}
 		if ( $this->comment_link_enabled ) {
 			add_action( 'show_password_fields', [ $this, 'set_user_profile' ] );
@@ -242,6 +312,7 @@ class Mastodon extends NoMailService {
 	public function print_style() {
 		wp_enqueue_style( 'jquery-ui-dialog-min-css', includes_url() . 'css/jquery-ui-dialog.min.css' );
 		wp_enqueue_style( 'gianism-mastodon-style', plugins_url( 'assets/css/gianism-mastodon-style.css', dirname( __FILE__ ) ) );
+		wp_enqueue_style( 'font-awesome', 'https://use.fontawesome.com/releases/v5.2.0/css/all.css"' );
 	}
 
 	public function print_script() {
@@ -254,8 +325,6 @@ class Mastodon extends NoMailService {
 				'nonce' => wp_create_nonce( 'wp_rest' ),
 			]
 		);
-		wp_script_add_data( 'font-awesome', array( 'integrity', 'crossorigin' ), array( 'sha384-xymdQtn1n3lH2wcu0qhcdaOpQwyoarkgLVxC/wZ5q7h9gHtxICrpcaSUfygqZGOe', 'anonymous' ) );
-		wp_enqueue_script( 'font-awesome', 'https://use.fontawesome.com/releases/v5.0.13/js/all.js' );
 	}
 
 	/**
@@ -1134,77 +1203,219 @@ EOM;
 		return $bool;
 	}
 
-	public function comment_toot( $comment_id, $comment_approved, $commentdata ) {
-		if ( get_current_user_id() != $commentdata['user_ID'] ) {
+	public function post_toot( $new_status, $old_status, $post ) {
+		if ( 'publish' !== $new_status || ! empty( get_post_meta( $post->ID, 'status_uri', true ) ) ) {
 			return;
 		}
-		$acct  = get_user_meta( get_current_user_id(), $this->umeta_comment_link_acct, true );
-		$token = get_user_meta( get_current_user_id(), $this->umeta_comment_link_acct_access_token, true );
-		if ( ! $acct ) {
+		if ( 'post' !== $post->post_type && 'page' !== $post->post_type ) {
+			return;
+		}
+		if ( ! $this->acct ) {
 			return;
 		}
 
 		mb_internal_encoding( 'UTF-8' );
 		mb_regex_encoding( 'UTF-8' );
 
-		$post                = get_post( $commentdata['comment_post_ID'], 'ARRAY_A' );
-		$comment_content     = $commentdata['comment_content'];
-		$comment_content_len = mb_strlen( $comment_content );
-		$comment_parent      = $commentdata['comment_parent'];
-		if ( '' != $comment_parent ) {
-			$status_uri               = get_comment_meta( $comment_parent, 'status_uri', true );
-			$comment_parent_status_id = substr( $status_uri, strrpos( $status_uri, '/' ) + 1 );
+		$post_content = $post->post_content;
+		try {
+			$status_uri   = get_post_meta( $post->post_parent, 'status_uri', true );
+			if ( empty( $status_uri ) ) {
+				throw new \Exception( 'status_uri not found.' );
+			}
+			if ( 0 === strncmp( $this->instance_url, $status_domain, strlen( $this->instance_url ) ) ) {
+				$in_reply_to_id = substr( $status_uri, strrpos( $status_uri, '/' ) + 1 );
+				$parent_status  = $this->mastodon_get_status( $in_reply_to_id );
+				$parent_acct    = '@' . $parent_status['account']['acct'];
+			} else {
+				$searched       = $this->mastodon_get_search( $status_uri );
+				$in_reply_to_id = $searched['statuses'][0]['id'];
+				$parent_acct    = '@' . $searched['statuses'][0]['account']['acct'];
+			}
+			$post_content = $parent_acct . ' ' . $post_content;
+		} catch ( \Exception $e ) {
+			$in_reply_to_id = '';
+		}
+		$content_length   = mb_strlen( $post_content );
+		$title_template   = $this->post_link_title_template;
+		$content_template = $this->post_link_content_template;
+
+		$category_names = [];
+		$category_slugs = [];
+		if ( $categories = get_the_category( $post->ID ) ) {
+			foreach ( $categories as $category ) {
+				$category_names[] = '#' . $category->name;
+				$category_slugs[] = '#' . $category->slug;
+			}
+		}
+		$tag_names = [];
+		$tag_slugs = [];
+		if ( $tags = get_the_tags( $post->ID ) ) {
+			foreach ( $tags as $tag ) {
+				$tag_names[] = '#' . $tag->name;
+				$tag_slugs[] = '#' . $tag->slug;
+			}
 		}
 
 		$replace_tags = [
-			'/%title%/'       => $post['post_title'],
-			'/%slug%/'        => $post['post_name'],
-			'/%post_url%/'    => get_permalink( $post['ID'] ),
-			'/%comment_url%/' => get_permalink( $post['ID'] ),
-			'/%site_url%/'    => get_permalink( $post['ID'] ),
-			'/%site_name%/'   => get_bloginfo( 'name' ),
+			'/%title%/'          => $post->post_title,
+			'/%post_excerpt%/'   => $post->post_excerpt,
+			'/%slug%/'           => $post->post_name,
+			'/%category_name%/'  => isset( $category_names[0] ) ? '' : $category_names[0],
+			'/%category_slug%/'  => isset( $category_slugs[0] ) ? '' : $category_slugs[0],
+			'/%category_names%/' => implode( ' ', $category_names ),
+			'/%category_slugs%/' => implode( ' ', $category_slugs ),
+			'/%tag_names%/'      => implode( ' ', $tag_names ),
+			'/%tag_slugs%/'      => implode( ' ', $tag_slugs ),
+			'/%slug%/'           => $post->post_name,
+			'/%post_url%/'       => get_permalink( $post->ID ),
+			'/%home_url%/'       => home_url(),
+			'/%site_name%/'      => get_bloginfo( 'name' ),
 		];
 
-		$spoiler_text       = $this->tag_replace( $this->comment_link_spoiler_text, $replace_tags );
-		$content_length_max = $this->comment_link_max_length - mb_strlen( $spoiler_text ) -
-			mb_strlen( $this->tag_replace( $this->comment_link_template, $replace_tags ) );
+		$title              = $this->tag_replace( $title_template, $replace_tags );
+		$content_length_max = $this->mastodon_content_length_max - mb_strlen( $title ) -
+			mb_strlen( $this->tag_replace( $content_template, $replace_tags ) );
 
 		$status = [
-			'visibility' => 'public',
-		] + ( empty( $spoiler_text ) ? [] : [
-			'sensitive'    => true,
-			'spoiler_text' => $spoiler_text,
-		] ) + ( empty( $comment_parent_status_id ) ? [] : [
-			'in_reply_to_id' => $comment_parent_status_id,
+			'visibility'   => $this->post_link_visibility,
+			'sensitive'    => $this->post_link_sensitive,
+			'spoiler_text' => $this->post_link_sensitive ? $title : '',
+		] + ( empty( $in_reply_to_id ) ? [] : [
+			'in_reply_to_id' => $in_reply_to_id,
 		] );
 
 		try {
-			if ( $comment_content_len > $content_length_max ) {
-				$content_length_max -= 7; // '… (1/9)'
-				$split_num           = ceil( $comment_content_len / $content_length_max );
+			if ( $content_length > $content_length_max ) {
+				$content_length_max -= 9; // '… (10/10)'
+				$split_num           = ceil( $content_length / $content_length_max );
 				if ( $split_num > 20 ) {
-					throw new \Exception( 'Too many divisions of comment content.' );
+					throw new \Exception( 'Too many divisions of content.' );
 				} elseif ( $split_num >= 10 ) {
 					$content_length_max -= 2;
-					$split_num           = ceil( $comment_content_len / $content_length_max );
+					$split_num           = ceil( $content_length / $content_length_max );
 				}
-				for ( $pos = 0; $pos < $comment_content_len; $pos += $content_length_max ) {
-					$split_contents[] = mb_substr( $comment_content, $pos, $content_length_max );
-				}
-				$counter = 1;
+				$split_contents = $this->split_content( $post_content, $content_length_max );
+				$split_num      = count( $split_contents );
+				$counter        = 1;
 				foreach ( $split_contents as $split_content ) {
-					$status['status']         = $this->tag_replace(
-						$this->comment_link_template, $replace_tags,
-						$split_content . sprintf( '… (%d/%d)', $counter, $split_num )
-					);
-					$posted_status            = $this->mastodon_post_status( $acct, $token, $status );
+					if ( $this->post_link_sensitive ) {
+						$status['spoiler_text'] = sprintf( '%s (%d/%d)', $title, $counter, $split_num );
+						$status['status']       = '';
+					} else {
+						$status['spoiler_text'] = '';
+						$status['status']       = sprintf( '%s (%d/%d)', $title, $counter, $split_num ) . "\n\n";
+					}
+					$status['status']        .= $this->tag_replace( $content_template, $replace_tags, $split_content );
+					$posted_status            = $this->mastodon_post_status( $status );
 					$status['in_reply_to_id'] = $posted_status['id'];
 					$posted_statuses[]        = $posted_status;
 					$counter++;
 				}
 			} else {
-				$status['status']  = $this->tag_replace( $this->comment_link_template, $replace_tags, $comment_content );
-				$posted_statuses[] = $this->mastodon_post_status( $acct, $token, $status );
+				$status['status']  = $this->tag_replace( $content_template, $replace_tags, $post_content );
+				$posted_statuses[] = $this->mastodon_post_status( $status );
+			}
+
+			add_post_meta( $post->ID, 'status_uri', $posted_statuses[0]['uri'] );
+		} catch ( \Exception $e ) {
+			return;
+		}
+
+		return $posted_statuses;
+	}
+
+	public function comment_toot( $comment_id, $comment_approved, $commentdata ) {
+		if ( get_current_user_id() != $commentdata['user_ID'] ) {
+			return;
+		}
+		if ( ! $this->acct ) {
+			return;
+		}
+
+		mb_internal_encoding( 'UTF-8' );
+		mb_regex_encoding( 'UTF-8' );
+
+		$post            = get_post( $commentdata['comment_post_ID'], 'ARRAY_A' );
+		$comment_content = $commentdata['comment_content'];
+		$comment_parent  = $commentdata['comment_parent'];
+		try {
+			if ( '' != $comment_parent ) {
+				$status_uri = get_comment_meta( $comment_parent, 'status_uri', true );
+			} else {
+				$status_uri = get_post_meta( $post['ID'], 'status_uri', true );
+			}
+			if ( empty( $status_uri ) ) {
+				throw new \Exception( 'status_uri not found.' );
+			}
+			$status_domain = substr( $status_uri, 0, strpos( $status_uri, '/', strlen( 'https://' ) ) );
+			if ( $this->instance_url === $status_domain ) {
+				$in_reply_to_id  = substr( $status_uri, strrpos( $status_uri, '/' ) + 1 );
+				$parent_status   = $this->mastodon_get_status( $in_reply_to_id );
+				$comment_content = '@' . $parent_status['account']['acct'] . ' ' . $comment_content;
+			} else {
+				$searched        = $this->mastodon_get_search( $status_uri );
+				$in_reply_to_id  = $searched['statuses'][0]['id'];
+				$comment_content = '@' . $searched['statuses'][0]['account']['acct'] . ' ' . $comment_content;
+			}
+		} catch ( \Exception $e ) {
+			$in_reply_to_id = '';
+		}
+		$content_length   = mb_strlen( $comment_content );
+		$title_template   = $this->comment_link_title_template;
+		$content_template = $this->comment_link_content_template;
+
+		$replace_tags = [
+			'/%title%/'        => $post['post_title'],
+			'/%post_excerpt%/' => $post['post_excerpt'],
+			'/%slug%/'         => $post['post_name'],
+			'/%post_url%/'     => get_permalink( $post['ID'] ),
+			'/%home_url%/'     => home_url(),
+			'/%site_name%/'    => get_bloginfo( 'name' ),
+		];
+
+		$title              = $this->tag_replace( $title_template, $replace_tags );
+		$content_length_max = $this->mastodon_content_length_max - mb_strlen( $title ) -
+			mb_strlen( $this->tag_replace( $content_template, $replace_tags ) );
+
+		$status = [
+			'visibility'   => $this->comment_link_visibility,
+			'sensitive'    => $this->comment_link_sensitive,
+			'spoiler_text' => $this->comment_link_sensitive ? $title : '',
+		] + ( empty( $in_reply_to_id ) ? [] : [
+			'in_reply_to_id' => $in_reply_to_id,
+		] );
+
+		try {
+			if ( $content_length > $content_length_max ) {
+				$content_length_max -= 9; // '… (10/10)'
+				$split_num           = ceil( $content_length / $content_length_max );
+				if ( $split_num > 20 ) {
+					throw new \Exception( 'Too many divisions of content.' );
+				} elseif ( $split_num >= 10 ) {
+					$content_length_max -= 2;
+					$split_num           = ceil( $content_length / $content_length_max );
+				}
+				$split_contents = $this->split_content( $comment_content, $content_length_max );
+				$split_num      = count( $split_contents );
+				$counter        = 1;
+				foreach ( $split_contents as $split_content ) {
+					if ( $this->comment_link_sensitive ) {
+						$status['spoiler_text'] = sprintf( '%s (%d/%d)', $title, $counter, $split_num );
+						$status['status']       = '';
+					} else {
+						$status['spoiler_text'] = '';
+						$status['status']       = sprintf( '%s (%d/%d)', $title, $counter, $split_num ) . "\n\n";
+					}
+					$status['status']        .= $this->tag_replace( $content_template, $replace_tags, $split_content );
+					$posted_status            = $this->mastodon_post_status( $status );
+					$status['in_reply_to_id'] = $posted_status['id'];
+					$posted_statuses[]        = $posted_status;
+					$counter++;
+				}
+			} else {
+				$status['status']  = $this->tag_replace( $content_template, $replace_tags, $comment_content );
+				$posted_statuses[] = $this->mastodon_post_status( $status );
 			}
 
 			add_comment_meta( $comment_id, 'status_uri', $posted_statuses[0]['uri'] );
@@ -1215,8 +1426,12 @@ EOM;
 		return $posted_statuses;
 	}
 
+	private function split_content( $text, $width ) {
+		return preg_split( '/(.{1,' . $width . '})(?:\s|$)|(.{' . $width . '})/suS', $text, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE );
+	}
+
 	private function tag_replace( $template, $replace_tags, $content = '' ) {
-		$replace_tags['/%comment%/'] = $content;
+		$replace_tags['/%content%/'] = $content;
 		return preg_replace(
 			array_keys( $replace_tags ),
 			array_values( $replace_tags ),
@@ -1224,23 +1439,50 @@ EOM;
 		);
 	}
 
-	private function mastodon_post_status( $acct, $token, $status ) {
-		$instance_url = $this->instance_registry->get_valid_domain( $acct );
+	private function mastodon_post_status( $status ) {
+		return $this->mastodon_api( 'POST', '/api/v1/statuses', $status );
+	}
 
+	private function mastodon_get_status( $id ) {
+		return $this->mastodon_api( 'GET', '/api/v1/statuses/' . esc_url( $id ) );
+	}
+
+	private function mastodon_get_search( $url ) {
+		return $this->mastodon_api( 'GET', '/api/v1/search', [ 'q' => esc_url( $url ) ] );
+	}
+
+	private function mastodon_api( $method, $endpoint, $data = [] ) {
 		$param = [
-			'method'      => 'POST',
+			'method'      => $method,
 			'timeout'     => '5',
 			'redirection' => '5',
-			'httpversion' => '1.0',
+			'httpversion' => '1.1',
 			'blocking'    => true,
 			'cookies'     => [],
-			'user-agent'  => isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko',
-			'body'        => [
-				'access_token' => $token,
-			] + $status,
+			'user-agent'  => isset( $_SERVER['HTTP_USER_AGENT'] ) ?
+				$_SERVER['HTTP_USER_AGENT'] :
+				'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko',
 		];
 
-		$response = wp_remote_request( esc_url_raw( $instance_url ) . '/api/v1/statuses', $param );
+		switch ( $method ) {
+			case 'POST':
+			case 'PUT':
+			case 'PATCH':
+				$data['access_token'] = $this->token;
+				$param['body']        = $data;
+				break;
+			case 'GET':
+			case 'DELETE':
+			default:
+				$param['head'] = [
+					'Content-Type: application/json',
+					'Authorization: Bearer ' . $this->token,
+				];
+				$endpoint     .= '?' . build_query( $data );
+				break;
+			}
+
+		$response = wp_remote_request( esc_url_raw( $this->instance_url ) . $endpoint, $param );
 		if ( is_wp_error( $response ) ) {
 			throw new \Exception( 'WP_Error: ' . $response->get_error_message() );
 		} elseif ( wp_remote_retrieve_response_code( $response ) !== 200 ) {
@@ -1248,7 +1490,6 @@ EOM;
 		}
 		return json_decode( wp_remote_retrieve_body( $response ), true );
 	}
-
 
 	/**
 	 * Getter
@@ -1279,6 +1520,15 @@ EOM;
 				break;
 			case 'enabled':
 				return $this->option->is_enabled( $this->service_name );
+				break;
+			case 'acct':
+				return get_user_meta( get_current_user_id(), $this->umeta_comment_link_acct, true );
+				break;
+			case 'access_token':
+				return get_user_meta( get_current_user_id(), $this->umeta_comment_link_acct_access_token, true );
+				break;
+			case 'instance_url':
+				return $this->instance_registry->get_valid_domain( $this->acct );
 				break;
 			default:
 				return parent::__get( $name );
