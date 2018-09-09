@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Gianism Mastodon\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-07-09 01:32+0900\n"
+"POT-Creation-Date: 2018-09-09 13:53+0900\n"
 "PO-Revision-Date: 2018-06-25 00:53+0900\n"
 "Last-Translator: Takeshi Umeda <noel.yoshiba@gmail.com>\n"
 "Language-Team: Takeshi Umeda <noel.yoshiba@gmail.com>\n"
@@ -17,48 +17,47 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: includes/Mastodon.php:124
+#: includes/Mastodon.php:203
 #, php-format
 msgid ""
-"If you allow this setting, when you post a comment, %s will post on your "
-"Mastodon account."
+"If you allow this setting, when you post, %s will post on your Mastodon "
+"account."
 msgstr ""
-"この設定を許可すると、コメントを投稿した際に、%sがあなたのマストドンアカウン"
-"トで投稿を行います。"
+"この設定を許可すると、投稿した際に、%sがあなたのマストドンアカウントで投稿を行います。"
 
-#: includes/Mastodon.php:196 includes/Mastodon.php:327
-#: includes/Mastodon.php:351
+#: includes/Mastodon.php:294 includes/Mastodon.php:427
+#: includes/Mastodon.php:451
 msgid "You must be logged in"
 msgstr "ログインする必要があります。"
 
-#: includes/Mastodon.php:357
+#: includes/Mastodon.php:457
 msgid "You must be connected account"
 msgstr "ログインする必要があります。"
 
-#: includes/Mastodon.php:363
+#: includes/Mastodon.php:463
 msgid "Write permission recorded!"
 msgstr "書き込み権限を記録しました！"
 
-#: includes/Mastodon.php:381
+#: includes/Mastodon.php:481
 #, php-format
 msgid "Sorry, but wrong access. Please go back to <a href=\"%s\">%s</a>."
 msgstr "不正なアクセスです。<a href=\"%s\">%s</a>に戻ってください。"
 
-#: includes/Mastodon.php:411 includes/Mastodon.php:1046
+#: includes/Mastodon.php:511 includes/Mastodon.php:1148
 msgid "You must be logged in."
 msgstr "ログインする必要があります。"
 
-#: includes/Mastodon.php:415
+#: includes/Mastodon.php:515
 #, php-format
 msgid "Your account is not connected with %s"
 msgstr "あなたのアカウントは%sに接続されていません。"
 
-#: includes/Mastodon.php:419
+#: includes/Mastodon.php:519
 #, php-format
 msgid "Your account is now unlinked from %s."
 msgstr "あなたのアカウントは%sとの接続を解除されました。"
 
-#: includes/Mastodon.php:509
+#: includes/Mastodon.php:609
 #, php-format
 msgid ""
 "Your account is already connected to the %s account below. Please select an "
@@ -67,7 +66,7 @@ msgstr ""
 "あなたのアカウントは既に以下の%sアカウントに接続されています。切断するアカウ"
 "ントを選択してください。"
 
-#: includes/Mastodon.php:512
+#: includes/Mastodon.php:612
 #, php-format
 msgid ""
 "Connecting with %1$s, you can login with %2$s via %1$s without password or "
@@ -76,27 +75,27 @@ msgstr ""
 "%1$sアカウントに接続すると、%2$sに%1$sアカウントでログインできるようになりま"
 "す。パスワードやメールアドレスは必要ありません。"
 
-#: includes/Mastodon.php:647
+#: includes/Mastodon.php:747
 #, php-format
 msgid "Log in with %s"
 msgstr "%sでログイン"
 
-#: includes/Mastodon.php:665
+#: includes/Mastodon.php:765
 #, php-format
 msgid "Login with %s"
 msgstr "%sでログイン"
 
-#: includes/Mastodon.php:705 includes/Mastodon.php:709
+#: includes/Mastodon.php:805 includes/Mastodon.php:809
 #, php-format
 msgid "Connect %s"
 msgstr "%sに接続"
 
-#: includes/Mastodon.php:740 includes/Mastodon.php:744
+#: includes/Mastodon.php:840 includes/Mastodon.php:844
 #, php-format
 msgid "Disconnect %s"
 msgstr "%sを切断"
 
-#: includes/Mastodon.php:741
+#: includes/Mastodon.php:841
 #, php-format
 msgid ""
 "You really disconnect from %s? If so, please be sure about your "
@@ -105,78 +104,94 @@ msgstr ""
 "ほんとうに%sとの接続を解除しますか？　その場合、パスワードやメールアドレスな"
 "どの認証情報に注意してください。ログインできなくなるかもしれません。"
 
-#: includes/Mastodon.php:761
+#: includes/Mastodon.php:863
 msgid "Connect to instance"
 msgstr "インスタンスに接続"
 
-#: includes/Mastodon.php:762
+#: includes/Mastodon.php:864
 msgid "Please enter the URL of the instance"
 msgstr "インスタンスのURLを入力してください"
 
-#: includes/Mastodon.php:763
+#: includes/Mastodon.php:865
 msgid "The format is incorrect, or a URL that is not Mastodon is specified."
 msgstr "書式に誤りがあるか、MastodonではないURLが指定されています。"
 
-#: includes/Mastodon.php:764
+#: includes/Mastodon.php:866
 msgid "Select from recent instance"
 msgstr "最近使ったインスタンスから選択"
 
-#: includes/Mastodon.php:776
+#: includes/Mastodon.php:878
 msgid "Comment link acct consent explanation"
 msgstr "コメント連動の許可について"
 
-#: includes/Mastodon.php:789
+#: includes/Mastodon.php:891
 msgid "Confirm delete comment link acct"
 msgstr "コメント連動解除の警告"
 
-#: includes/Mastodon.php:790
+#: includes/Mastodon.php:892
 msgid "Would you like to release the comment linkage?"
 msgstr "コメント連動アカウントを削除しますか？"
 
-#: includes/Mastodon.php:1034
+#: includes/Mastodon.php:1136
 msgid "Sorry, but cannot create valid user name."
 msgstr "申し訳ありませんが、ユーザー名を作成できませんでした。"
 
-#: includes/Mastodon.php:1051
+#: includes/Mastodon.php:1153
 msgid "Sorry, but failed to expand with API."
 msgstr "申し訳ございません、APIに接続できませんでした。"
 
-#: includes/Mastodon.php:1082
+#: includes/Mastodon.php:1187
 msgid "(No selection)"
 msgstr "（選択していません）"
 
-#: includes/Mastodon.php:1086
+#: includes/Mastodon.php:1191
 msgid "Comment Link Acct"
 msgstr "コメント連動アカウント"
 
-#: includes/Mastodon.php:1095
+#: includes/Mastodon.php:1200
 msgid ""
 "Specify the mastodon instance to be linked posting at the time of comment."
 msgstr "コメント時に連動投稿するマストドンインスタンスを指定します。"
 
-#: templates/setting.php:12
+#: templates/setting.php:8
+msgid "Public: Post to public timelines"
+msgstr "公開: 公開タイムラインに表示されます"
+
+#: templates/setting.php:9
+msgid "Unlisted: Do not post to public timelines"
+msgstr "未収載: 公開タイムラインには表示されません"
+
+#: templates/setting.php:10
+msgid "Private: Post to followers only"
+msgstr "フォロワー限定: フォロワーのみに表示されます"
+
+#: templates/setting.php:11
+msgid "Direct: Post to mentioned users only"
+msgstr "ダイレクト: メンションしたユーザーにのみ表示されます"
+
+#: templates/setting.php:19
 #, php-format
 msgid "Connect with %s"
 msgstr "%sに接続"
 
-#: templates/setting.php:16
+#: templates/setting.php:23
 #, php-format
 msgid "See detail at <a href=\"%1$s\">%2$s</a>."
 msgstr "詳細はこちら：<a href=\"%1$s\">%2$s</a>"
 
-#: templates/setting.php:16
+#: templates/setting.php:23
 msgid "How to set up"
 msgstr "設定方法"
 
-#: templates/setting.php:22 templates/setup.php:18
+#: templates/setting.php:29 templates/setup.php:18
 msgid "App Name"
 msgstr "アプリケーション名"
 
-#: templates/setting.php:27 templates/setup.php:22
+#: templates/setting.php:34 templates/setup.php:22
 msgid "Login Button List"
 msgstr "ログインボタンのリスト"
 
-#: templates/setting.php:33 templates/setup.php:24
+#: templates/setting.php:40 templates/setup.php:24
 #, php-format
 msgid ""
 "Please describe the domain of instance you want to display as login button, "
@@ -187,11 +202,11 @@ msgstr ""
 "さい。任意のインスタンスのログインボタンを<code> * </code>（アスタリスクの"
 "み）として指定してください。"
 
-#: templates/setting.php:38 templates/setup.php:28
+#: templates/setting.php:45 templates/setup.php:28
 msgid "Deny Instance List"
 msgstr "拒否するインスタンスのリスト"
 
-#: templates/setting.php:44 templates/setup.php:29
+#: templates/setting.php:51 templates/setup.php:29
 #, php-format
 msgid ""
 "Please specify the domain of instances that deny login using regular "
@@ -200,36 +215,193 @@ msgstr ""
 "正規表現を使用してログインを拒否するインスタンスのドメインを指定してくださ"
 "い。"
 
-#: templates/setting.php:49
+#: templates/setting.php:58
+msgid "Linked Post settings"
+msgstr ""
+
+#: templates/setting.php:62
+msgid "Linked post"
+msgstr "連動投稿"
+
+#: templates/setting.php:66
+#, php-format
+msgid "To enable linked post."
+msgstr "連動投稿を有効にする。"
+
+#: templates/setting.php:70
+msgid "Manual link posting"
+msgstr "手動連動投稿"
+
+#: templates/setting.php:74
+#, php-format
+msgid "Linked Post manually."
+msgstr "手動連動投稿を有効にする。"
+
+#: templates/setting.php:78
+msgid "Linked post visibility"
+msgstr "連動投稿の表示範囲"
+
+#: templates/setting.php:94
+msgid "Linked post sensitive"
+msgstr "連動投稿の閲覧注意"
+
+#: templates/setting.php:98
+#, php-format
+msgid "To enable CW of linked post."
+msgstr "連動投稿の閲覧注意(CW)を有効にする。"
+
+#: templates/setting.php:102
+msgid "Post link title template"
+msgstr "連動投稿タイトルテンプレート"
+
+#: templates/setting.php:110 templates/setting.php:138
+#: templates/setting.php:206 templates/setting.php:228
+msgid "Available Tags"
+msgstr "使用可能なタグ"
+
+#: templates/setting.php:112 templates/setting.php:142
+msgid "Title of the article"
+msgstr "投稿のタイトル"
+
+#: templates/setting.php:113 templates/setting.php:143
+msgid "Slug of the article"
+msgstr "投稿のスラッグ"
+
+#: templates/setting.php:114 templates/setting.php:144
+msgid "Category name of the article (Only the first one)"
+msgstr "投稿のカテゴリ名（最初の一つだけ）"
+
+#: templates/setting.php:115 templates/setting.php:145
+msgid "Category slug of the article (Only the first one)"
+msgstr "投稿のスラッグ（最初の一つだけ）"
+
+#: templates/setting.php:116 templates/setting.php:146
+msgid "Category names of the article"
+msgstr "投稿のカテゴリ名"
+
+#: templates/setting.php:117 templates/setting.php:147
+msgid "Category slugs of the article"
+msgstr "投稿のスラッグ"
+
+#: templates/setting.php:118 templates/setting.php:148
+msgid "Tag names of the article"
+msgstr "投稿のタグ名"
+
+#: templates/setting.php:119 templates/setting.php:149
+msgid "Tag slugs of the article"
+msgstr "投稿のタグスラッグ"
+
+#: templates/setting.php:120 templates/setting.php:150
+msgid "URL of article"
+msgstr "投稿のURL"
+
+#: templates/setting.php:121 templates/setting.php:151
+#: templates/setting.php:211 templates/setting.php:234
+msgid "URL of this site home"
+msgstr "サイトのURL"
+
+#: templates/setting.php:122 templates/setting.php:152
+#: templates/setting.php:212 templates/setting.php:235
+#, php-format
+msgid "Name of this site - &quot;%s&quot;"
+msgstr "サイト名（%s）"
+
+#: templates/setting.php:125
+#, php-format
+msgid "Please describe the Contents Warning (CW) template of the linked post."
+msgstr "連動投稿の閲覧注意(CW)テンプレートを記述してください。"
+
+#: templates/setting.php:130
+msgid "Post link content template"
+msgstr "連動投稿本文テンプレート"
+
+#: templates/setting.php:140
+msgid "Post contents"
+msgstr "投稿の本文"
+
+#: templates/setting.php:141
+msgid "Post excerpt"
+msgstr "投稿の抜粋"
+
+#: templates/setting.php:155 templates/setting.php:238
+#, php-format
+msgid "Please describe the content template of the comments linked post."
+msgstr "連動投稿の本文のテンプレートを記述してください。"
+
+#: templates/setting.php:162
+msgid "Linked Comments settings"
+msgstr "連動コメント設定"
+
+#: templates/setting.php:166
 msgid "Comments linked post"
 msgstr "コメント連動投稿"
 
-#: templates/setting.php:53
+#: templates/setting.php:170
 #, php-format
 msgid "To enable commnets linked post."
 msgstr "コメント連動投稿を有効にする。"
 
-#: templates/setting.php:57
+#: templates/setting.php:174
+msgid "Comments linked post visibility"
+msgstr "コメント連動投稿の表示範囲"
+
+#: templates/setting.php:190
+msgid "Comments linked post sensitive"
+msgstr "コメント連動投稿の閲覧注意"
+
+#: templates/setting.php:194
+#, php-format
+msgid "To enable CW of commnets linked post."
+msgstr "コメント連動投稿の閲覧注意(CW)を有効にする。"
+
+#: templates/setting.php:198
+msgid "Comment link title template"
+msgstr "コメント連動のタイトルテンプレート"
+
+#: templates/setting.php:208 templates/setting.php:231
+msgid "Title of the commented article"
+msgstr "コメントのタイトル"
+
+#: templates/setting.php:209 templates/setting.php:232
+msgid "Slug of the commented article"
+msgstr "コメントのスラッグ"
+
+#: templates/setting.php:210 templates/setting.php:233
+msgid "URL of commented article"
+msgstr "コメントのURL"
+
+#: templates/setting.php:215
+#, php-format
+msgid ""
+"Please describe the Contents Warning (CW) template of the comments linked "
+"post."
+msgstr "コメント連動投稿の閲覧注意(CW)テンプレートを記述してください。"
+
+#: templates/setting.php:220
+msgid "Comment link content template"
+msgstr "コメント本文テンプレート"
+
+#: templates/setting.php:230
+msgid "Comment contents"
+msgstr "コメント本文"
+
+#: templates/setting.php:245
+msgid "Other settings"
+msgstr "その他の設定"
+
+#: templates/setting.php:249
+msgid "Maximum content length per link post"
+msgstr "コンテンツの最大長"
+
+#: templates/setting.php:254
 msgid "Consent explanation"
 msgstr "同意事項の説明"
 
-#: templates/setting.php:63
+#: templates/setting.php:260
 #, php-format
-msgid "Please describe the notes on allowing comments linked posting."
-msgstr "コメント連動投稿を許可する際に同意していただく内容の説明を記載してください。"
-
-#: templates/setting.php:68
-msgid "Comment link template"
-msgstr "コメントテンプレート"
-
-#: templates/setting.php:74
-msgid "Available Tags"
-msgstr "使用可能なタグ"
-
-#: templates/setting.php:80
-#, php-format
-msgid "Please describe the template of the comments linked post."
-msgstr "コメント連動投稿のテンプレートを記述してください。"
+msgid "Please describe the notes on allowing linked posting."
+msgstr ""
+"連動投稿を許可する際に同意していただく内容の説明を記載してください。"
 
 #: templates/setup.php:8
 msgid "Mastodon login is very easy. Just enable it."
