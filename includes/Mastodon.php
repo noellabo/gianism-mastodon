@@ -1219,7 +1219,7 @@ EOM;
 
 		$post_content = $post->post_content;
 		try {
-			$status_uri   = get_post_meta( $post->post_parent, 'status_uri', true );
+			$status_uri = get_post_meta( $post->post_parent, 'status_uri', true );
 			if ( empty( $status_uri ) ) {
 				throw new \Exception( 'status_uri not found.' );
 			}
@@ -1480,7 +1480,7 @@ EOM;
 				];
 				$endpoint     .= '?' . build_query( $data );
 				break;
-			}
+		}
 
 		$response = wp_remote_request( esc_url_raw( $this->instance_url ) . $endpoint, $param );
 		if ( is_wp_error( $response ) ) {

@@ -5,7 +5,7 @@
  * Plugin URI: https://noellabo.jp/gianism-mastodon/
  * Description: This plugin add mastodon to Gianism.
  * Author: noellabo
- * Version: 0.1.0
+ * Version: 0.2.0
  * PHP Version: 5.4.0
  * License: GPL 2.0 or later
  * Author URI: https://noellabo.jp
